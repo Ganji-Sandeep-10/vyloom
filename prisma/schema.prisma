@@ -1,0 +1,264 @@
+// VYLOOM — Prisma schema
+// NOTE: provider is set to "sqlite" for local development in this sandbox.
+// For production, switch to:
+//   datasource db {
+//     provider = "postgresql"
+//     url      = env("DATABASE_URL")
+//   }
+// Everything else (models, relations, enums-as-strings) is Postgres-compatible.
+// SQLite doesn't support native enums, so enums are modeled as validated strings
+// with constants defined in src/lib/constants.ts — swap to Prisma `enum` blocks
+// when you move to Postgres if you prefer DB-level enforcement.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USERS & AUTH ============
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          String    @default("CUSTOMER") // CUSTOMER | ADMIN
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  cart          Cart?
+  wishlist      Wishlist?
+
+  @@index([email])
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String   @default("Home")
+  fullName    String
+  phone       String
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  pincode     String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ============ CATALOG ============
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  imageUrl  String?
+  products  Product[]
+}
+
+model Product {
+  id               String            @id @default(cuid())
+  name             String
+  slug             String            @unique
+  description      String?
+  price            Float
+  compareAtPrice   Float?
+  categoryId       String?
+  category         Category?         @relation(fields: [categoryId], references: [id])
+  sku              String?           @unique
+  fabric           String?
+  fit              String?
+  care             String?
+  isAvailable      Boolean           @default(true)
+  isNew            Boolean           @default(false)
+  isBestSeller     Boolean           @default(false)
+  isLimited        Boolean           @default(false)
+  hideStockCount   Boolean           @default(false)
+  offerPrice       Float?
+  offerStart       DateTime?
+  offerEnd         DateTime?
+  offerLabel       String?           // e.g. "BUY 3 @1199" — shown as a badge on cards
+  rating           Float?            // average review rating, 0..5
+  reviewCount      Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  images           ProductImage[]
+  variants         ProductVariant[]
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
+  orderItems       OrderItem[]
+
+  @@index([categoryId])
+  @@index([isNew])
+  @@index([isBestSeller])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  position  Int      @default(0)
+  isMain    Boolean  @default(false)
+
+  @@index([productId])
+}
+
+// One row per (product, color, size) combination — the real inventory unit.
+model ProductVariant {
+  id               String       @id @default(cuid())
+  productId        String
+  product          Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color            String
+  size             String
+  sku              String?      @unique
+  stockQuantity    Int          @default(0)
+  lowStockThreshold Int         @default(5)
+
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
+  orderItems       OrderItem[]
+
+  @@unique([productId, color, size])
+  @@index([productId])
+}
+
+// ============ CART ============
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Guest carts (no account yet) are tracked by an anonymous cookie id.
+  guestId   String?    @unique
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id         String          @id @default(cuid())
+  cartId     String
+  cart       Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String
+  variant    ProductVariant  @relation(fields: [variantId], references: [id])
+  quantity   Int             @default(1)
+  createdAt  DateTime        @default(now())
+
+  @@unique([cartId, variantId])
+}
+
+// ============ WISHLIST ============
+
+model Wishlist {
+  id     String         @id @default(cuid())
+  userId String         @unique
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  WishlistItem[]
+}
+
+model WishlistItem {
+  id         String          @id @default(cuid())
+  wishlistId String
+  wishlist   Wishlist        @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  createdAt  DateTime        @default(now())
+
+  @@unique([wishlistId, productId, variantId])
+}
+
+// ============ ORDERS ============
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  state           String
+  pincode         String
+
+  subtotal        Float
+  shipping        Float       @default(0)
+  discount        Float       @default(0)
+  total           Float
+
+  couponCode      String?
+
+  paymentStatus   String      @default("PENDING") // PENDING | PAID | FAILED | REFUNDED
+  orderStatus     String      @default("PENDING")  // PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED | CANCELLED
+
+  items           OrderItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+}
+
+model OrderItem {
+  id         String          @id @default(cuid())
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String
+  variant    ProductVariant  @relation(fields: [variantId], references: [id])
+  name       String          // snapshot at purchase time
+  color      String
+  size       String
+  price      Float           // snapshot at purchase time
+  quantity   Int
+
+  @@index([orderId])
+}
+
+// ============ COUPONS ============
+
+model Coupon {
+  id                String    @id @default(cuid())
+  code              String    @unique
+  discountType      String    // PERCENTAGE | FIXED
+  discountValue     Float
+  minimumOrderValue Float?
+  maximumDiscount   Float?
+  startDate         DateTime?
+  endDate           DateTime?
+  usageLimit        Int?
+  usageCount        Int       @default(0)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+}
+
+// ============ NEWSLETTER ============
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

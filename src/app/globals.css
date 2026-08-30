@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+}
+
+* {
+  border-color: #e7e7e7;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;                 /* Firefox */
+  scrollbar-color: #016120 #f2f2f2;      /* thumb, track */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar — WebKit / Chromium / Edge */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: #f2f2f2;
+}
+::-webkit-scrollbar-thumb {
+  background: #016120;
+  border: 3px solid #f2f2f2;   /* inset look */
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00b53a;
+}
+::-webkit-scrollbar-corner {
+  background: #f2f2f2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #ff5a00;
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #ff5a00;
+  color: #ffffff;
+}
+
+/* Hide scrollbar for horizontal category / nav scrollers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
