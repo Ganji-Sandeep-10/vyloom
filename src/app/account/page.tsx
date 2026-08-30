@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/auth/LogoutButton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "My Account" };
 
 export default async function AccountPage() {

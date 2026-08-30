@@ -4,6 +4,8 @@ import ProductCard from "@/components/shop/ProductCard";
 import ShopFiltersBar from "@/components/shop/ShopFiltersBar";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Shop" };
 
 interface Props {

@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Subscribers" };
 
 export default async function AdminNewsletterPage() {

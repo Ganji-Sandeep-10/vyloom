@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/shop/ProductCard";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Wishlist" };
 
 export default async function WishlistPage() {

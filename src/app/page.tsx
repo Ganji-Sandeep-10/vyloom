@@ -8,6 +8,8 @@ import ProductCard from "@/components/shop/ProductCard";
 import Reveal from "@/components/home/Reveal";
 import NewsletterForm from "@/components/home/NewsletterForm";
 
+export const dynamic = "force-dynamic";
+
 const VALUES = [
   { icon: Truck, title: "FREE SHIPPING", body: "On all prepaid orders across India." },
   { icon: RefreshCw, title: "EASY RETURNS", body: "7-day easy returns & exchange." },
@@ -34,11 +36,18 @@ function SectionHeading({ title, href }: { title: string; href?: string }) {
 }
 
 export default async function HomePage() {
-  const [newDrops, bestSellers, categories] = await Promise.all([
-    getNewDrops(8),
-    getBestSellers(8),
-    prisma.category.findMany(),
-  ]);
+  let newDrops: Awaited<ReturnType<typeof getNewDrops>> = [];
+  let bestSellers: Awaited<ReturnType<typeof getBestSellers>> = [];
+  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
+  try {
+    [newDrops, bestSellers, categories] = await Promise.all([
+      getNewDrops(8),
+      getBestSellers(8),
+      prisma.category.findMany(),
+    ]);
+  } catch {
+    // DB unavailable (e.g. build without a database) — render an empty storefront.
+  }
 
   return (
     <div>

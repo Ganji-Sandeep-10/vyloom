@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatINR } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Orders" };
 
 interface Props {

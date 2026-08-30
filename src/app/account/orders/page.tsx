@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatINR } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "My Orders" };
 
 export default async function OrdersPage() {
