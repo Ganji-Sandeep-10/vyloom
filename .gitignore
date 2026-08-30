@@ -29,8 +29,7 @@ yarn-error.log*
 .env
 .env*.local
 
-# prisma local db
-/prisma/dev.db
+# prisma local db journal (the dev.db file itself is committed as read-only seed data)
 /prisma/*.db-journal
 
 # vercel
